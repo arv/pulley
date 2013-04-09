@@ -249,6 +249,7 @@
 			}
 
 			msg += '\n\n' + pull.body;
+			msg += '\n\nReview URL: ' + pull.issue_url;
 			msg += '\n\nCloses #' + id;
 
 			var commit = [ "commit", "-a", "--message=" + msg ];
