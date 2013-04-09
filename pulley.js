@@ -224,6 +224,7 @@
 				author = JSON.parse( data )[ 0 ].commit.author.name,
 				base_branch = pull.base.ref,
 				issues = [],
+				issuesLine = '',
 				urls = [],
 				findBug = /[Ff]ixes #(\d+)/g;
 
@@ -236,11 +237,13 @@
 
 			// Search just body for issues to add to the commit message
 			while ( ( match = findBug.exec( pull.body ) ) ) {
-				issues.push( " Fixes #" + match[ 1 ] );
+				issues.push( "fixes #" + match[ 1 ] );
 			}
 
 			// Add issues to the commit message
-			msg += issues.join(",");
+			if (issues.length) {
+				issuesLine = ", " + issues.join(", ");
+			}
 
 			if ( urls.length ) {
 				msg += "\n\nMore Details:" + urls.map(function( url ) {
@@ -250,7 +253,7 @@
 
 			msg += '\n\n' + pull.body;
 			msg += '\n\nReview URL: ' + pull.issue_url;
-			msg += '\n\nCloses #' + id;
+			msg += '\n\nCloses #' + id + issuesLine;
 
 			var commit = [ "commit", "-a", "--message=" + msg ];
 
