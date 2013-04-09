@@ -226,7 +226,8 @@
 				issues = [],
 				issuesLine = '.',
 				urls = [],
-				findBug = /\b[Ff]ixes #(\d+)/g;
+				findBug = /\b[Ff]ixes #(\d+)/g,
+				findFixesLine = /\nFixes #\d+(?:, fixes #\d+)*\.?$/g;
 
 			// Search title and body for issues for issues to link to
 			if ( tracker ) {
@@ -243,6 +244,7 @@
 			// Add issues to the commit message
 			if (issues.length) {
 				issuesLine = ", " + issues.join(", ") + '.';
+				pull.body = pull.body.replace(findFixesLine, '');
 			}
 
 			if ( urls.length ) {
