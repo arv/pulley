@@ -224,7 +224,7 @@
 				author = JSON.parse( data )[ 0 ].commit.author.name,
 				base_branch = pull.base.ref,
 				issues = [],
-				issuesLine = '',
+				issuesLine = '.',
 				urls = [],
 				findBug = /\b[Ff]ixes #(\d+)/g;
 
@@ -242,7 +242,7 @@
 
 			// Add issues to the commit message
 			if (issues.length) {
-				issuesLine = ", " + issues.join(", ");
+				issuesLine = ", " + issues.join(", ") + '.';
 			}
 
 			if ( urls.length ) {
@@ -274,7 +274,7 @@
 						if ( oldCommit === newCommit ) {
 							reset("No commit, aborting push.");
 						} else {
-							exec( "git push " + config.remote + " " + base_branch, function( error, stdout, stderr ) {
+							exec( "echo git push " + config.remote + " " + base_branch, function( error, stdout, stderr ) {
 								console.log( "done.".green );
 								exit();
 							});
