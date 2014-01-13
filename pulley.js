@@ -94,14 +94,15 @@
 		if ( !id ) {
 			exit("No pull request ID specified, please provide one.");
 		}
-		exec( "git remote -v show " + config.remote, function( error, stdout, stderr ) {
-			user_repo = ( /URL:.*?([\w\-]+\/[\w\-]+)/.exec( stdout ) || [] )[ 1 ];
+		var remote_cmd = "git remote -v show " + config.remote;
+		exec( remote_cmd, function( error, stdout, stderr ) {
+			user_repo = ( /URL:\shttps:\/\/github.com\/*?([\w\-]+\/[\w\-]+)/.exec( stdout ) || [] )[ 1 ];
+			user_repo = user_repo || ( /URL:.*?([\w\-]+\/[\w\-]+)/.exec( stdout ) || [] )[ 1 ];
 			tracker = config.repos[ user_repo ];
-
 			if ( user_repo ) {
 				getStatus();
 			} else {
-				exit("External repository not found.");
+				exit("External repository not found when parsing output from \'" + remote_cmd + "\'");
 			}
 		});
 	}
@@ -155,7 +156,7 @@
 	}
 
 	function mergePull( pull ) {
-		var repo = pull.head.repo.ssh_url,
+		var repo = pull.head.repo.html_url || pull.head.repo.ssh_url,
 			head_branch = pull.head.ref,
 			base_branch = pull.base.ref,
 			branch = "pull-" + id,
@@ -207,6 +208,7 @@
 					exit("Unable to merge.  Please resolve then retry:\n" + stderr);
 				} else {
 					console.log( "done.".green );
+					console.log('pull_cmds: ' + pull_cmds.join('\n'))
 					commit( pull );
 				}
 			});
@@ -220,12 +222,14 @@
 
 		callAPI( path, function( data ) {
 			var match,
-				msg = "Close GH-" + id + ": " + pull.title + ".",
+				msg = pull.title,
 				author = JSON.parse( data )[ 0 ].commit.author.name,
 				base_branch = pull.base.ref,
 				issues = [],
+				issuesLine = '',
 				urls = [],
-				findBug = /#(\d+)/g;
+				findBug = /\b(?:[Ff]ixe[sd]|[Cc]lose[sd]?) #(\d+)/g,
+				findClosesLine = /\n+Closes #\d+(?:, closes #\d+)*\.?$/g;
 
 			// Search title and body for issues for issues to link to
 			if ( tracker ) {
@@ -236,17 +240,24 @@
 
 			// Search just body for issues to add to the commit message
 			while ( ( match = findBug.exec( pull.body ) ) ) {
-				issues.push( " Fixes #" + match[ 1 ] );
+				issues.push( "closes #" + match[ 1 ] );
 			}
 
 			// Add issues to the commit message
-			msg += issues.join(",");
+			if (issues.length) {
+				issuesLine = ", " + issues.join(", ");
+				pull.body = pull.body.replace(findClosesLine, '');
+			}
 
 			if ( urls.length ) {
 				msg += "\n\nMore Details:" + urls.map(function( url ) {
 					return "\n - " + url;
 				}).join("");
 			}
+
+			msg += '\n\n' + pull.body;
+			msg += '\n\nReview URL: ' + pull.issue_url;
+			msg += '\n\nCloses #' + id + issuesLine + '.';
 
 			var commit = [ "commit", "-a", "--message=" + msg ];
 
