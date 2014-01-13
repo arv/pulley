@@ -75,7 +75,7 @@
 				if ( err ) {
 					exit( err );
 				}
-				
+
 				token = body.token;
 				if ( token ) {
 					exec( "git config --global --add pulley.token " + token, function( error, stdout, stderr ) {
@@ -94,14 +94,15 @@
 		if ( !id ) {
 			exit("No pull request ID specified, please provide one.");
 		}
-		exec( "git remote -v show " + config.remote, function( error, stdout, stderr ) {
-			user_repo = ( /URL:.*?([\w\-]+\/[\w\-]+)/.exec( stdout ) || [] )[ 1 ];
+		var remote_cmd = "git remote -v show " + config.remote;
+		exec( remote_cmd, function( error, stdout, stderr ) {
+			user_repo = ( /URL:\shttps:\/\/github.com\/*?([\w\-]+\/[\w\-]+)/.exec( stdout ) || [] )[ 1 ];
+			user_repo = user_repo || ( /URL:.*?([\w\-]+\/[\w\-]+)/.exec( stdout ) || [] )[ 1 ];
 			tracker = config.repos[ user_repo ];
-
 			if ( user_repo ) {
 				getStatus();
 			} else {
-				exit("External repository not found.");
+				exit("External repository not found when parsing output from \'" + remote_cmd + "\'");
 			}
 		});
 	}
@@ -155,7 +156,7 @@
 	}
 
 	function mergePull( pull ) {
-		var repo = pull.head.repo.ssh_url,
+		var repo = pull.head.repo.html_url || pull.head.repo.ssh_url,
 			head_branch = pull.head.ref,
 			base_branch = pull.base.ref,
 			branch = "pull-" + id,
