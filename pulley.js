@@ -256,7 +256,7 @@
 			}
 
 			msg += '\n\n' + pull.body;
-			msg += '\n\nReview URL: ' + pull.issue_url;
+			msg += '\n\nReview URL: ' + pull.html_url;
 			msg += '\n\nCloses #' + id + issuesLine + '.';
 
 			var commit = [ "commit", "-a", "--message=" + msg ];
