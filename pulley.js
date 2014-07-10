@@ -75,7 +75,7 @@
 				if ( err ) {
 					exit( err );
 				}
-				
+
 				token = body.token;
 				if ( token ) {
 					exec( "git config --global --add pulley.token " + token, function( error, stdout, stderr ) {
@@ -186,7 +186,7 @@
 		exec( checkout_cmds.join( " && " ), function( error, stdout, stderr ) {
 			if ( /toplevel/i.test( stderr ) ) {
 				exit("Please call pulley from the toplevel directory of this repo.");
-			} else if ( /fatal/i.test( stderr ) ) {
+			} else if ( error && error.code && /fatal/i.test( stderr ) ) {
 				exec( "git branch -D " + branch + " && " + checkout, doPull );
 			} else {
 				doPull();
@@ -204,7 +204,7 @@
 				if ( /Merge conflict/i.test( stdout ) ) {
 					exit("Merge conflict. Please resolve then run: " +
 						process.argv.join(" ") + " done");
-				} else if ( /error/.test( stderr ) ) {
+				} else if ( error && error.code && /error/.test( stderr ) ) {
 					exit("Unable to merge.  Please resolve then retry:\n" + stderr);
 				} else {
 					console.log( "done.".green );
